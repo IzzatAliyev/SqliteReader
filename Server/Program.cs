@@ -1,19 +1,40 @@
-﻿using System.Data;
+﻿namespace Server;
+
+using System.Data;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
-
-namespace Server;
+using Server.Models;
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        Task.Run(async () =>
+        Task.Run(Work).GetAwaiter().GetResult();
+
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        var app = builder.Build();
+
+        if (app.Environment.IsDevelopment())
         {
-            var cards = await ReadAll();
-            var serialized = Serialize(cards);
-            await WriteToFile(serialized);
-        }).GetAwaiter().GetResult();
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
+        else
+        {
+            app.UseHttpsRedirection();
+        }
+
+
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.Run();
     }
 
     public static async Task<List<Card>> ReadAll()
@@ -63,10 +84,10 @@ public class Program
         await File.WriteAllLinesAsync(path, [value]);
     }
 
-    public record Card(
-        string Id,
-        string Timestamp,
-        string? Front,
-        string? Back,
-        string Level);
+    private static async Task Work()
+    {
+        var cards = await ReadAll();
+        var serialized = Serialize(cards);
+        await WriteToFile(serialized);
+    }
 }
