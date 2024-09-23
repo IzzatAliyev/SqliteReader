@@ -2,3 +2,4 @@ bin/
 obj/
 share.db
 result.json
+appsettings.json
